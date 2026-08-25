@@ -236,6 +236,12 @@
   .card-actions-top{
     flex:0 0 auto;
     display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:6px;
+  }
+  .actions-row{
+    display:flex;
     align-items:center;
     gap:2px;
   }
@@ -258,6 +264,20 @@
     letter-spacing:-2px;
   }
   .icon-btn.drag:active{ cursor:grabbing; }
+  .nav-icon-btn{
+    width:28px;height:28px;
+    border-radius:8px;
+    background: var(--color-accent);
+    color: var(--color-forest);
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+  }
+  .nav-icon-btn:active{ background: var(--color-accent-deep); color:#fff; }
+  .nav-icon-btn svg{
+    width:15px;height:15px;
+    fill:currentColor;
+    stroke:none;
+  }
 
   .card-body{
     padding: 0 12px 12px;
@@ -288,48 +308,6 @@
     color: var(--color-ink-soft);
     margin-bottom:2px;
   }
-
-  .meta-line{
-    border-top:1px solid var(--color-line);
-    padding-top:16px;
-    margin-top:2px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:14px;
-  }
-  .meta-blocks{
-    display:flex;
-    gap:28px;
-    flex:1;
-    min-width:0;
-  }
-  .meta-block{ display:flex; flex-direction:column; gap:4px; min-width:0; }
-  .meta-block .mb-label{
-    font-size:10.5px;
-    color:var(--color-ink-faint);
-    font-weight:600;
-  }
-  .meta-block .mb-value{
-    font-size:12.5px;
-    color:var(--color-ink);
-    font-weight:700;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .nav-btn-sm{
-    flex:0 0 auto;
-    text-decoration:none;
-    background: var(--color-accent);
-    color: var(--color-forest);
-    font-weight:700;
-    font-size:13px;
-    padding:12px 26px;
-    border-radius: 10px;
-    white-space:nowrap;
-  }
-  .nav-btn-sm:active{ background: var(--color-accent-deep); color:#fff; }
 
   .empty-state{
     margin: 40px 20px;
@@ -659,6 +637,11 @@
     color:var(--color-ink-soft);
     margin:0 0 18px;
   }
+  .form-row-2{
+    display:flex;
+    gap:10px;
+  }
+  .form-row-2 .form-group{ flex:1; min-width:0; }
   .form-group{ margin-bottom:14px; }
   .form-group label{
     display:block;
@@ -667,7 +650,8 @@
     color:var(--color-ink);
     margin-bottom:6px;
   }
-  .form-group input{
+  .form-group input,
+  .form-group select{
     width:100%;
     font-family:var(--font-body);
     font-size:14px;
@@ -678,7 +662,8 @@
     color:var(--color-ink);
     outline:none;
   }
-  .form-group input:focus{ border-color: var(--color-accent-deep); }
+  .form-group input:focus,
+  .form-group select:focus{ border-color: var(--color-accent-deep); }
   .form-hint{ font-size:11.5px; color:var(--color-ink-faint); margin-top:5px; }
   .submit-btn{
     width:100%;
@@ -835,8 +820,18 @@
       <h3 class="sheet-title">手動新增景點</h3>
       <button type="button" class="sheet-close" id="manualCloseBtn" aria-label="關閉">×</button>
     </div>
-    <p class="sheet-desc">加入目前選取的天數，其餘詳細資訊之後可自行編輯</p>
-    <form id="manualForm">
+    <p class="sheet-desc">選擇日期與時間後會自動依時間排入該天的行程順序中</p>
+    <form id="manualForm" novalidate>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>日期</label>
+          <select id="manualDay"></select>
+        </div>
+        <div class="form-group">
+          <label>時間（選填）</label>
+          <input type="time" id="manualTime">
+        </div>
+      </div>
       <div class="form-group">
         <label>景點名稱</label>
         <input type="text" id="manualName" placeholder="例如：淺草寺" required>
@@ -882,7 +877,7 @@
 (function(){
   "use strict";
 
-  var STORAGE_KEY = "baobaotrip_h5_itinerary_v3";
+  var STORAGE_KEY = "baobaotrip_h5_itinerary_v4";
   var GAP = 10;
 
   /* ---------- Demo Data ---------- */
@@ -893,26 +888,18 @@
       activeChecklistTab: "todo",
       days: {
         1: [
-          mk("10:00","成田國際機場","入境、領行李、購買西瓜卡","","40 分鐘","24 小時營業","千葉縣成田市古込1-1"),
-          mk("13:30","淺草寺","東京最古老寺廟，雷門超好拍","雷門前拍照、抽籤體驗","1.5 小時","06:00 - 17:00","東京都台東區淺草2-3-1"),
-          mk("16:00","東京晴空塔","登高鳥瞰東京全景與夕陽","展望台＋水族館套票較划算","2 小時","10:00 - 21:00","東京都墨田區押上1-1-2"),
-          mk("19:00","晴空街道燒肉晚餐","親子友善包廂式燒肉店","","1 小時","17:00 - 23:00","東京都墨田區押上1-1-2")
+          mk("05:00","抵達仁川機場","班機降落，準備入境","","","","仁川國際機場"),
+          mk("07:00","出境並轉乘機場巴士 6001","出境後先到飯店寄放行李","","","","首爾東大門百通飯店 Baiton Hotel"),
+          mk("10:00","聖水洞早午餐＋逛街","飯店搭地鐵2號線直達約20分鐘","韓國小眾品牌、Hince、開心果冰淇淋","","","首爾聖水洞"),
+          mk("17:00","回飯店 Check-in","放下行李、辦理入住手續","","","","首爾東大門百通飯店 Baiton Hotel"),
+          mk("17:45","出發前往看煙火","飯店搭4號線直達二村站","備案：搭5號線到麻浦站，改到麻浦大橋看","","","二村站"),
+          mk("19:20","煙火開始","漢江公園煙火秀正式開始","","","","二村漢江公園"),
+          mk("20:40","煙火結束","","","","","二村漢江公園"),
+          mk("21:00","返回飯店","","","","","首爾東大門百通飯店 Baiton Hotel")
         ],
-        2: [
-          mk("08:00","東京迪士尼樂園","經典城堡與遊行不能錯過","小飛象、小熊維尼獵蜜記優先入場","9 小時","08:00 - 22:00","千葉縣浦安市舞濱1-1"),
-          mk("12:30","樂園內午餐・北齋","","","1 小時","11:00 - 21:00","千葉縣浦安市舞濱1-1"),
-          mk("18:00","電子大遊行夜間花車","夜間花車遊行超浪漫夢幻","建議提前30分鐘卡位","45 分鐘","20:00 場次","千葉縣浦安市舞濱1-1")
-        ],
-        3: [
-          mk("09:00","上野動物園","貓熊香香每日限時開放","貓熊區建議一早先看","2 小時","09:30 - 17:00","東京都台東區上野公園9-83"),
-          mk("13:00","teamLab Planets TOKYO","沉浸式光影藝術，需脫鞋涉水","建議著短褲或可捲褲管衣物","1.5 小時","10:00 - 19:00","東京都江東區豐洲6-1-16"),
-          mk("16:30","豐洲市場","現撈海鮮丼與市場散策","","1 小時","05:00 - 15:00","東京都江東區豐洲6-6-1")
-        ],
-        4: [
-          mk("10:00","三鷹之森吉卜力美術館","龍貓迷必訪，需事先預約門票","館內全程禁止拍照","2 小時","10:00 - 18:00","東京都三鷹市下連雀1-1-83"),
-          mk("14:00","東京車站一番街","伴手禮甜點大採購天堂","東京香蕉、起司蛋糕捲必買","1.5 小時","10:00 - 20:30","東京都千代田區丸之內1-9-1"),
-          mk("17:30","前往成田機場","搭乘利木津巴士返程","","1 小時車程","依巴士時刻","千葉縣成田市古込1-1")
-        ]
+        2: [],
+        3: [],
+        4: []
       },
       checklist: {
         todo: [
@@ -960,16 +947,14 @@
 
   var infoData = {
     flights: [
-      { tag:"去程", name:"CI 100", detail:"台北桃園 (TPE) → 東京成田 (NRT)　08:20 - 12:40" },
-      { tag:"回程", name:"CI 101", detail:"東京成田 (NRT) → 台北桃園 (TPE)　18:00 - 21:15" }
+      { tag:"去程", name:"LJ734", detail:"09/05・台北桃園 (TPE) → 首爾仁川 (ICN)　01:25 - 05:00" },
+      { tag:"回程", name:"LJ733", detail:"09/08・首爾仁川 (ICN) → 台北桃園 (TPE)　22:40 - 00:10（隔日抵達）" }
     ],
     stays: [
-      { tag:"Day 1-2", name:"Tokyo Bay Hotel", detail:"入住 15:00・退房 11:00　千葉縣浦安市高洲3-4-2" },
-      { tag:"Day 3-4", name:"新宿家庭旅館", detail:"入住 15:00・退房 10:00　東京都新宿區西新宿7-2-6" }
+      { tag:"09/05 - 09/08", name:"首爾東大門百通飯店 Baiton Hotel", detail:"入住 09/05 15:00・退房 09/08 11:00" }
     ],
     reservations: [
-      { tag:"Day 1", name:"晴空街道燒肉店", detail:"19:00・4 位　需於現場出示訂位簡訊" },
-      { tag:"Day 3", name:"teamLab Planets", detail:"13:00 場次・已完成線上付款" }
+      { tag:"09/08", name:"Orta Clinic 醫美", detail:"12:00 預約" }
     ]
   };
 
@@ -1119,8 +1104,13 @@
     var actions = document.createElement("div");
     actions.className = "card-actions-top";
     actions.innerHTML =
-      '<button class="icon-btn drag" title="拖曳排序">⠿</button>' +
-      '<button class="icon-btn delete" title="刪除">×</button>';
+      '<div class="actions-row">' +
+        '<button class="icon-btn drag" title="拖曳排序">⠿</button>' +
+        '<button class="icon-btn delete" title="刪除">×</button>' +
+      '</div>' +
+      '<a class="nav-icon-btn" href="' + toMapsUrl(item.address) + '" target="_blank" rel="noopener" title="開啟導航">' +
+        '<svg viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>' +
+      '</a>';
     top.appendChild(actions);
 
     li.appendChild(top);
@@ -1133,18 +1123,8 @@
       html += '<p class="card-desc">' + esc(item.desc) + '</p>';
     }
     if(item.tip){
-      html += '<div class="card-tip"><span class="tip-label">推薦</span>' + esc(item.tip) + '</div>';
+      html += '<div class="card-tip"><span class="tip-label">備註</span>' + esc(item.tip) + '</div>';
     }
-
-    var blocks = "";
-    if(item.duration){
-      blocks += '<div class="meta-block"><span class="mb-label">停留時間</span><span class="mb-value">' + esc(item.duration) + '</span></div>';
-    }
-    if(item.hours){
-      blocks += '<div class="meta-block"><span class="mb-label">營業時間</span><span class="mb-value">' + esc(item.hours) + '</span></div>';
-    }
-    html += '<div class="meta-line"><div class="meta-blocks">' + blocks + '</div>' +
-      '<a class="nav-btn-sm" href="' + toMapsUrl(item.address) + '" target="_blank" rel="noopener">開啟導航</a></div>';
 
     body.innerHTML = html;
     li.appendChild(body);
@@ -1282,9 +1262,34 @@
 
   /* ---------- Manual add sheet ---------- */
   var manualOverlay = document.getElementById("manualOverlay");
+
+  function populateManualDaySelect(){
+    var sel = document.getElementById("manualDay");
+    sel.innerHTML = "";
+    [1,2,3,4].forEach(function(d){
+      var opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = dayLabels[d];
+      if(d === state.activeDay) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function insertItemSorted(day, item){
+    var arr = state.days[day];
+    if(!item.time){ arr.push(item); return; }
+    var insertIndex = arr.length;
+    for(var i=0;i<arr.length;i++){
+      var t = arr[i].time;
+      if(!t || t > item.time){ insertIndex = i; break; }
+    }
+    arr.splice(insertIndex, 0, item);
+  }
+
   document.getElementById("openManualBtn").addEventListener("click", function(){
     closeFab();
     document.getElementById("manualForm").reset();
+    populateManualDaySelect();
     manualOverlay.classList.add("show");
   });
   document.getElementById("manualCloseBtn").addEventListener("click", function(){
@@ -1295,17 +1300,20 @@
   });
   document.getElementById("manualForm").addEventListener("submit", function(e){
     e.preventDefault();
+    var day = Number(document.getElementById("manualDay").value);
+    var timeInput = document.getElementById("manualTime");
+    var time = timeInput.validity && timeInput.validity.badInput ? "" : timeInput.value;
     var name = document.getElementById("manualName").value.trim();
     var address = document.getElementById("manualAddress").value.trim();
-    if(!name || !address) return;
-    var item = mk("", name, "", "", "", "", address);
-    state.days[state.activeDay].push(item);
+    if(!name){ showToast("請輸入景點名稱"); return; }
+    if(!address){ showToast("請輸入地址"); return; }
+    var item = mk(time, name, "", "", "", "", address);
+    insertItemSorted(day, item);
     save();
-    renderDaySummary();
-    renderList();
+    if(day === state.activeDay){ renderDaySummary(); renderList(); }
     manualOverlay.classList.remove("show");
     document.getElementById("manualForm").reset();
-    showToast("已加入「" + name + "」");
+    showToast("已加入「" + name + "」到 " + dayLabels[day]);
   });
 
   /* ---------- Video pick sheet ---------- */
