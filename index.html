@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#163300">
+<title>旅遊行程規劃</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg: #F8F8F8;
+    --color-bg-soft: #ECECEA;
+    --color-surface: #FFFFFF;
+    --color-ink: #142B16;
+    --color-ink-soft: #667066;
+    --color-ink-faint: #9AA39A;
+    --color-line: #DEE4D8;
+    --color-accent: #9FE870;
+    --color-accent-deep: #2ED06E;
+    --color-mint: #E2F6D5;
+    --color-forest: #163300;
+    --color-danger: #C24B3F;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 10px;
+    --shadow-card: 0 1px 2px rgba(20,43,22,0.04);
+    --shadow-pop: 0 12px 28px -10px rgba(20,43,22,0.28);
+    --font-body: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+    --nav-h: 64px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-body);
+    background: var(--color-bg);
+    color:var(--color-ink);
+    min-height:100vh;
+    -webkit-tap-highlight-color: transparent;
+    font-feature-settings:"tnum" 1;
+  }
+  .app-shell{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--color-bg);
+    position:relative;
+    overflow-x:hidden;
+    padding-bottom:calc(var(--nav-h) + 24px + env(safe-area-inset-bottom));
+    border-left:1px solid var(--color-line);
+    border-right:1px solid var(--color-line);
+  }
+
+  /* ---------- Header ---------- */
+  .app-header{
+    padding: 22px 20px 18px;
+    background: var(--color-surface);
+  }
+  .app-title{
+    font-weight:800;
+    font-size:22px;
+    letter-spacing:-0.3px;
+    color:var(--color-forest);
+    margin:0;
+  }
+
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  /* ---------- Day Tabs ---------- */
+  .day-tabs{
+    display:flex;
+    gap:8px;
+    padding: 14px 16px 0;
+  }
+  .day-tab{
+    flex:1;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13px;
+    color:var(--color-ink-soft);
+    background:#fff;
+    border:1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    padding:10px 4px;
+    text-align:center;
+    cursor:pointer;
+    transition: background .18s ease, color .18s ease, border-color .18s ease;
+  }
+  .day-tab.active{
+    background: var(--color-forest);
+    color:#fff;
+    border-color: var(--color-forest);
+  }
+
+  /* ---------- Weather strip ---------- */
+  .weather-strip{
+    margin: 12px 16px 0;
+    background:#fff;
+    border-radius: var(--radius-md);
+    box-shadow: 0 1px 3px rgba(20,43,22,0.08);
+    padding: 14px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .weather-hourly{
+    flex:2;
+    min-width:0;
+    display:flex;
+    gap:16px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .weather-hourly::-webkit-scrollbar{ display:none; }
+  .weather-hour{
+    flex:0 0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+  }
+  .weather-hour-time{
+    font-size:10.5px;
+    color:var(--color-ink-faint);
+    font-weight:600;
+  }
+  .weather-hour-temp{
+    font-size:12.5px;
+    color:var(--color-ink);
+    font-weight:700;
+  }
+  .weather-daily{
+    flex:1;
+    min-width:0;
+    border-left:1px solid var(--color-line);
+    padding-left:14px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:4px;
+  }
+  .weather-daily-temp{
+    font-size:15.5px;
+    font-weight:800;
+    color:var(--color-forest);
+    white-space:nowrap;
+  }
+  .weather-daily-rain{
+    font-size:11px;
+    font-weight:600;
+    color:#2C7BD1;
+    white-space:nowrap;
+  }
+
+  /* ---------- Day summary bar ---------- */
+  .day-summary{
+    margin: 16px 16px 0;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px;
+  }
+  .day-summary-text{
+    font-size:13px;
+    color:var(--color-ink-soft);
+  }
+  .day-summary-text b{ color:var(--color-ink); font-weight:700; }
+  .copy-btn{
+    font-family:var(--font-body);
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--color-forest);
+    background:#fff;
+    border:1px solid var(--color-line);
+    border-radius:var(--radius-sm);
+    padding:8px 12px;
+    white-space:nowrap;
+    cursor:pointer;
+  }
+  .copy-btn:active{ background: var(--color-bg-soft); }
+
+  /* ---------- Trip list & cards ---------- */
+  .trip-list{
+    list-style:none;
+    margin:14px 16px 0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .trip-card{
+    background:var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: 0 1px 3px rgba(20,43,22,0.08);
+    position:relative;
+    animation: cardIn .35s ease both;
+    touch-action: pan-y;
+  }
+  .trip-card.dragging{
+    box-shadow: var(--shadow-pop);
+    z-index:20;
+  }
+  @keyframes cardIn{
+    from{ opacity:0; transform: translateY(6px); }
+    to{ opacity:1; transform:none; }
+  }
+  .card-top{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    padding: 12px 12px 8px;
+  }
+  .card-head-main{ flex:1; min-width:0; }
+  .card-time{
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--color-ink-soft);
+  }
+  .card-time.empty{ color:var(--color-ink-faint); font-weight:500; }
+  .card-name{
+    font-weight:700;
+    font-size:14.5px;
+    color:var(--color-forest);
+    margin:3px 0 0;
+    line-height:1.3;
+    word-break:break-word;
+  }
+  .card-address{
+    font-size:11px;
+    color:var(--color-ink-soft);
+    margin-top:2px;
+    line-height:1.4;
+    word-break:break-word;
+  }
+  .card-actions-top{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:2px;
+  }
+  .icon-btn{
+    border:none;
+    background:transparent;
+    color:var(--color-ink-faint);
+    width:24px;height:24px;
+    border-radius:7px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .icon-btn:active{ background: var(--color-bg-soft); }
+  .icon-btn.delete{ color:var(--color-danger); font-size:15px; font-weight:600; }
+  .icon-btn.drag{
+    cursor:grab;
+    touch-action:none;
+    color:var(--color-ink-faint);
+    letter-spacing:-2px;
+  }
+  .icon-btn.drag:active{ cursor:grabbing; }
+
+  .card-body{
+    padding: 0 12px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .card-desc{
+    font-size:11.5px;
+    line-height:1.55;
+    color: var(--color-ink);
+    margin:0;
+  }
+  .card-tip{
+    font-size:11.5px;
+    line-height:1.55;
+    color: var(--color-forest);
+    background: var(--color-mint);
+    border-left:3px solid var(--color-accent);
+    border-radius: 0 7px 7px 0;
+    padding:7px 10px;
+  }
+  .card-tip .tip-label{
+    display:block;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.4px;
+    color: var(--color-ink-soft);
+    margin-bottom:2px;
+  }
+
+  .meta-line{
+    border-top:1px solid var(--color-line);
+    padding-top:16px;
+    margin-top:2px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .meta-blocks{
+    display:flex;
+    gap:28px;
+    flex:1;
+    min-width:0;
+  }
+  .meta-block{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+  .meta-block .mb-label{
+    font-size:10.5px;
+    color:var(--color-ink-faint);
+    font-weight:600;
+  }
+  .meta-block .mb-value{
+    font-size:12.5px;
+    color:var(--color-ink);
+    font-weight:700;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .nav-btn-sm{
+    flex:0 0 auto;
+    text-decoration:none;
+    background: var(--color-accent);
+    color: var(--color-forest);
+    font-weight:700;
+    font-size:13px;
+    padding:12px 26px;
+    border-radius: 10px;
+    white-space:nowrap;
+  }
+  .nav-btn-sm:active{ background: var(--color-accent-deep); color:#fff; }
+
+  .empty-state{
+    margin: 40px 20px;
+    text-align:center;
+    color: var(--color-ink-soft);
+    font-size:13px;
+  }
+
+  /* ---------- FAB ---------- */
+  .fab-wrap{
+    position:fixed;
+    right:20px;
+    bottom: calc(var(--nav-h) + 20px + env(safe-area-inset-bottom));
+    max-width:480px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:10px;
+    z-index:50;
+  }
+  .fab-option{
+    background:#fff;
+    color:var(--color-forest);
+    border:1px solid var(--color-line);
+    border-radius:var(--radius-sm);
+    padding:10px 16px;
+    font-size:13px;
+    font-weight:600;
+    box-shadow: var(--shadow-pop);
+    opacity:0;
+    transform: translateY(8px);
+    pointer-events:none;
+    transition: all .2s ease;
+    white-space:nowrap;
+  }
+  .fab-wrap.open .fab-option{
+    opacity:1;
+    transform:none;
+    pointer-events:auto;
+  }
+  .fab-main{
+    width:54px;height:54px;
+    border-radius: var(--radius-md);
+    border:none;
+    background: var(--color-accent);
+    color: var(--color-forest);
+    font-size:26px;
+    font-weight:600;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow: var(--shadow-pop);
+    cursor:pointer;
+    transition: transform .2s ease, background .2s ease;
+    line-height:1;
+  }
+  .fab-wrap.open .fab-main{ transform: rotate(45deg); background: var(--color-forest); color:#fff; }
+  .fab-backdrop{
+    position:fixed; inset:0;
+    background: rgba(20,43,22,0.2);
+    opacity:0; pointer-events:none;
+    transition: opacity .2s ease;
+    z-index:46;
+  }
+  .fab-backdrop.show{ opacity:1; pointer-events:auto; }
+
+  /* ---------- Bottom Navbar ---------- */
+  .bottom-nav{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    margin:0 auto;
+    max-width:480px;
+    height:var(--nav-h);
+    background:#fff;
+    border-top:1px solid var(--color-line);
+    display:flex;
+    padding-bottom:env(safe-area-inset-bottom);
+    z-index:45;
+  }
+  .nav-item{
+    flex:1;
+    border:none;
+    background:transparent;
+    font-family:var(--font-body);
+    font-size:11px;
+    font-weight:600;
+    color:var(--color-ink-faint);
+    cursor:pointer;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+  }
+  .nav-icon{
+    width:20px;
+    height:20px;
+    stroke:currentColor;
+    fill:none;
+    stroke-width:1.8;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+  .nav-item.active{ color:var(--color-forest); }
+  .nav-item.active::before{
+    content:"";
+    position:absolute; top:0; left:50%;
+    transform: translateX(-50%);
+    width:26px;height:3px;
+    border-radius:0 0 3px 3px;
+    background: var(--color-accent);
+  }
+
+  /* ---------- Info view ---------- */
+  .info-section{ margin: 18px 16px 0; }
+  .info-section-title{
+    font-size:12px;
+    font-weight:700;
+    color:var(--color-ink-soft);
+    letter-spacing:.3px;
+    margin-bottom:8px;
+  }
+  .info-card{
+    background:#fff;
+    border-radius: var(--radius-md);
+    box-shadow: 0 1px 3px rgba(20,43,22,0.08);
+    padding:12px 14px;
+    margin-bottom:10px;
+  }
+  .info-card-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .info-card-name{ font-weight:700; font-size:13.5px; color:var(--color-forest); }
+  .info-tag{
+    font-size:10.5px;
+    font-weight:700;
+    color:var(--color-forest);
+    background: var(--color-mint);
+    padding:3px 8px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .info-card-detail{ font-size:11.5px; color:var(--color-ink-soft); margin-top:5px; line-height:1.6; }
+
+  /* ---------- Checklist view ---------- */
+  .subtabs{
+    display:flex;
+    gap:8px;
+    padding: 14px 16px 0;
+  }
+  .subtab{
+    flex:1;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13px;
+    color:var(--color-ink-soft);
+    background:#fff;
+    border:1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    padding:10px 4px;
+    text-align:center;
+    cursor:pointer;
+  }
+  .subtab.active{
+    background: var(--color-forest);
+    color:#fff;
+    border-color: var(--color-forest);
+  }
+  .add-row{
+    display:flex;
+    gap:8px;
+    margin:14px 16px 0;
+  }
+  .add-row input{
+    flex:1;
+    font-family:var(--font-body);
+    font-size:13.5px;
+    padding:11px 13px;
+    border-radius:var(--radius-sm);
+    border:1.5px solid var(--color-line);
+    background:#fff;
+    color:var(--color-ink);
+    outline:none;
+    min-width:0;
+  }
+  .add-row input:focus{ border-color: var(--color-accent-deep); }
+  .add-row button{
+    flex:0 0 auto;
+    border:none;
+    background: var(--color-accent);
+    color: var(--color-forest);
+    font-weight:700;
+    font-size:13px;
+    padding:0 18px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+  }
+  .check-list{
+    list-style:none;
+    margin:12px 16px 0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .check-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#fff;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 1px 3px rgba(20,43,22,0.08);
+    padding:11px 12px;
+  }
+  .check-item input[type=checkbox]{
+    width:18px;height:18px;
+    accent-color: var(--color-accent-deep);
+    flex:0 0 auto;
+  }
+  .check-item .ci-text{
+    flex:1;
+    font-size:13px;
+    color:var(--color-ink);
+    word-break:break-word;
+  }
+  .check-item.done .ci-text{
+    color: var(--color-ink-faint);
+    text-decoration: line-through;
+  }
+  .check-item .ci-delete{
+    flex:0 0 auto;
+    border:none;
+    background:transparent;
+    color:var(--color-danger);
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    width:24px;height:24px;
+  }
+
+  /* ---------- Modal / bottom sheet ---------- */
+  .sheet-overlay{
+    position:fixed; inset:0;
+    background: rgba(20,43,22,0.35);
+    display:flex; align-items:flex-end;
+    justify-content:center;
+    opacity:0; pointer-events:none;
+    transition: opacity .2s ease;
+    z-index:60;
+  }
+  .sheet-overlay.show{ opacity:1; pointer-events:auto; }
+  .sheet{
+    background:#fff;
+    width:100%; max-width:480px;
+    border-radius: 18px 18px 0 0;
+    padding: 10px 20px 26px;
+    transform: translateY(20px);
+    transition: transform .25s ease;
+    max-height:85vh;
+    overflow-y:auto;
+    border-top:1px solid var(--color-line);
+  }
+  .sheet-overlay.show .sheet{ transform: translateY(0); }
+  .sheet-handle{
+    width:34px;height:4px;border-radius:2px;
+    background:var(--color-line);
+    margin: 6px auto 16px;
+  }
+  .sheet-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .sheet-close{
+    flex:0 0 auto;
+    border:none;
+    background:var(--color-bg-soft);
+    color:var(--color-ink-soft);
+    width:28px;height:28px;
+    border-radius:9px;
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .sheet-close:active{ background: var(--color-line); }
+  .video-url-row{
+    display:flex;
+    gap:8px;
+  }
+  .video-url-row input{
+    flex:1;
+    min-width:0;
+    font-family:var(--font-body);
+    font-size:14px;
+    padding:11px 13px;
+    border-radius:var(--radius-sm);
+    border:1.5px solid var(--color-line);
+    background:#fff;
+    color:var(--color-ink);
+    outline:none;
+  }
+  .video-url-row input:focus{ border-color: var(--color-accent-deep); }
+  .video-url-row button{
+    flex:0 0 auto;
+    border:none;
+    background: var(--color-accent);
+    color: var(--color-forest);
+    font-weight:700;
+    font-size:13px;
+    padding:0 18px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+  }
+  .sheet-title{
+    font-weight:800;
+    font-size:17px;
+    color:var(--color-forest);
+    margin:0 0 4px;
+  }
+  .sheet-desc{
+    font-size:12.5px;
+    color:var(--color-ink-soft);
+    margin:0 0 18px;
+  }
+  .form-group{ margin-bottom:14px; }
+  .form-group label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--color-ink);
+    margin-bottom:6px;
+  }
+  .form-group input{
+    width:100%;
+    font-family:var(--font-body);
+    font-size:14px;
+    padding:11px 13px;
+    border-radius:var(--radius-sm);
+    border:1.5px solid var(--color-line);
+    background:#fff;
+    color:var(--color-ink);
+    outline:none;
+  }
+  .form-group input:focus{ border-color: var(--color-accent-deep); }
+  .form-hint{ font-size:11.5px; color:var(--color-ink-faint); margin-top:5px; }
+  .submit-btn{
+    width:100%;
+    border:none;
+    background: var(--color-accent);
+    color: var(--color-forest);
+    font-weight:700;
+    font-size:14px;
+    padding:13px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+  }
+  .submit-btn:active{ background: var(--color-accent-deep); color:#fff; }
+
+  .ig-embed{
+    background:#111;
+    border-radius:var(--radius-md);
+    overflow:hidden;
+    aspect-ratio: 9 / 14;
+    margin-bottom:16px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .ig-embed iframe{ width:100%; height:100%; border:0; }
+  .video-list-title{
+    font-size:12.5px; font-weight:700; color:var(--color-ink);
+    margin: 4px 0 10px;
+  }
+  .video-pick-item{
+    display:flex; align-items:center; gap:10px;
+    background:#fff;
+    border:1px solid var(--color-line);
+    border-radius:var(--radius-md);
+    padding:12px 14px;
+    margin-bottom:10px;
+  }
+  .video-pick-item .vp-main{ flex:1; min-width:0; }
+  .video-pick-item .vp-name{ font-weight:700; font-size:13.5px; color:var(--color-forest); }
+  .video-pick-item .vp-desc{ font-size:11.5px; color:var(--color-ink-soft); margin-top:2px; }
+  .vp-add{
+    flex:0 0 auto;
+    border:1px solid var(--color-forest);
+    background: #fff;
+    color: var(--color-forest);
+    font-size:12px;
+    font-weight:700;
+    padding:8px 12px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .vp-add.added{ background: var(--color-bg-soft); border-color: var(--color-line); color: var(--color-ink-faint); }
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed;
+    left:50%; bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(16px);
+    background: var(--color-forest);
+    color:#fff;
+    font-size:12.5px;
+    font-weight:600;
+    padding:10px 18px;
+    border-radius:var(--radius-sm);
+    box-shadow: var(--shadow-pop);
+    opacity:0;
+    transition: all .25s ease;
+    z-index:80;
+    pointer-events:none;
+    white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(0); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <header class="app-header">
+    <h1 class="app-title">旅遊行程規劃</h1>
+  </header>
+
+  <!-- ===== View: 行程 ===== -->
+  <section class="view active" id="viewItinerary">
+    <nav class="day-tabs" id="dayTabs"></nav>
+    <div class="weather-strip" id="weatherStrip"></div>
+    <div class="day-summary">
+      <div class="day-summary-text" id="daySummary"></div>
+      <button class="copy-btn" id="copyAddrBtn">複製今日地址</button>
+    </div>
+    <ul class="trip-list" id="tripList"></ul>
+  </section>
+
+  <!-- ===== View: 資訊 ===== -->
+  <section class="view" id="viewInfo">
+    <div class="info-section">
+      <div class="info-section-title">航班</div>
+      <div id="infoFlights"></div>
+    </div>
+    <div class="info-section">
+      <div class="info-section-title">住宿</div>
+      <div id="infoStays"></div>
+    </div>
+    <div class="info-section">
+      <div class="info-section-title">預約店家</div>
+      <div id="infoReservations"></div>
+    </div>
+  </section>
+
+  <!-- ===== View: 清單 ===== -->
+  <section class="view" id="viewChecklist">
+    <nav class="subtabs" id="checklistTabs"></nav>
+    <form class="add-row" id="checklistAddForm">
+      <input type="text" id="checklistInput" placeholder="新增項目">
+      <button type="submit">新增</button>
+    </form>
+    <ul class="check-list" id="checklistList"></ul>
+  </section>
+
+</div>
+
+<!-- FAB (itinerary view only) -->
+<div class="fab-backdrop" id="fabBackdrop"></div>
+<div class="fab-wrap" id="fabWrap">
+  <button class="fab-option opt-video" id="openVideoBtn">影片選點</button>
+  <button class="fab-option opt-manual" id="openManualBtn">手動新增</button>
+  <button class="fab-main" id="fabMain">＋</button>
+</div>
+
+<!-- Bottom Navbar -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-item active" data-view="itinerary">
+    <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+    <span>行程</span>
+  </button>
+  <button class="nav-item" data-view="info">
+    <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12" y2="8"></line></svg>
+    <span>資訊</span>
+  </button>
+  <button class="nav-item" data-view="checklist">
+    <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="4" height="4" rx="1"></rect><path d="M4 6l0.8 0.8L6.5 5"></path><line x1="10" y1="6" x2="21" y2="6"></line><rect x="3" y="11" width="4" height="4" rx="1"></rect><line x1="10" y1="13" x2="21" y2="13"></line><rect x="3" y="18" width="4" height="4" rx="1"></rect><line x1="10" y1="20" x2="21" y2="20"></line></svg>
+    <span>清單</span>
+  </button>
+</nav>
+
+<!-- Manual add sheet -->
+<div class="sheet-overlay" id="manualOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 class="sheet-title">手動新增景點</h3>
+      <button type="button" class="sheet-close" id="manualCloseBtn" aria-label="關閉">×</button>
+    </div>
+    <p class="sheet-desc">加入目前選取的天數，其餘詳細資訊之後可自行編輯</p>
+    <form id="manualForm">
+      <div class="form-group">
+        <label>景點名稱</label>
+        <input type="text" id="manualName" placeholder="例如：淺草寺" required>
+      </div>
+      <div class="form-group">
+        <label>Google Maps 地址</label>
+        <input type="text" id="manualAddress" placeholder="貼上地址或 Google 導航網址" required>
+        <p class="form-hint">可直接貼上完整地址，或 Google 地圖分享連結</p>
+      </div>
+      <button type="submit" class="submit-btn">加入行程</button>
+    </form>
+  </div>
+</div>
+
+<!-- Video pick sheet -->
+<div class="sheet-overlay" id="videoOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 class="sheet-title">影片選點</h3>
+      <button type="button" class="sheet-close" id="videoCloseBtn" aria-label="關閉">×</button>
+    </div>
+    <p class="sheet-desc">貼上影片連結後即可在下方播放，並可加入影片中提到的景點</p>
+    <div class="form-group">
+      <label>影片連結</label>
+      <div class="video-url-row">
+        <input type="text" id="videoUrlInput" placeholder="貼上 Instagram / YouTube 影片連結">
+        <button type="button" id="loadVideoBtn">套用</button>
+      </div>
+      <p class="form-hint">支援貼上 Instagram 貼文網址或 YouTube 影片網址</p>
+    </div>
+    <div class="ig-embed">
+      <iframe src="about:blank" title="影片預留區" allowfullscreen loading="lazy"></iframe>
+    </div>
+    <div class="video-list-title">影片中提及的推薦景點</div>
+    <div id="videoPickList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "baobaotrip_h5_itinerary_v3";
+  var GAP = 10;
+
+  /* ---------- Demo Data ---------- */
+  function demoData(){
+    return {
+      activeDay: 1,
+      activeView: "itinerary",
+      activeChecklistTab: "todo",
+      days: {
+        1: [
+          mk("10:00","成田國際機場","入境、領行李、購買西瓜卡","","40 分鐘","24 小時營業","千葉縣成田市古込1-1"),
+          mk("13:30","淺草寺","東京最古老寺廟，雷門超好拍","雷門前拍照、抽籤體驗","1.5 小時","06:00 - 17:00","東京都台東區淺草2-3-1"),
+          mk("16:00","東京晴空塔","登高鳥瞰東京全景與夕陽","展望台＋水族館套票較划算","2 小時","10:00 - 21:00","東京都墨田區押上1-1-2"),
+          mk("19:00","晴空街道燒肉晚餐","親子友善包廂式燒肉店","","1 小時","17:00 - 23:00","東京都墨田區押上1-1-2")
+        ],
+        2: [
+          mk("08:00","東京迪士尼樂園","經典城堡與遊行不能錯過","小飛象、小熊維尼獵蜜記優先入場","9 小時","08:00 - 22:00","千葉縣浦安市舞濱1-1"),
+          mk("12:30","樂園內午餐・北齋","","","1 小時","11:00 - 21:00","千葉縣浦安市舞濱1-1"),
+          mk("18:00","電子大遊行夜間花車","夜間花車遊行超浪漫夢幻","建議提前30分鐘卡位","45 分鐘","20:00 場次","千葉縣浦安市舞濱1-1")
+        ],
+        3: [
+          mk("09:00","上野動物園","貓熊香香每日限時開放","貓熊區建議一早先看","2 小時","09:30 - 17:00","東京都台東區上野公園9-83"),
+          mk("13:00","teamLab Planets TOKYO","沉浸式光影藝術，需脫鞋涉水","建議著短褲或可捲褲管衣物","1.5 小時","10:00 - 19:00","東京都江東區豐洲6-1-16"),
+          mk("16:30","豐洲市場","現撈海鮮丼與市場散策","","1 小時","05:00 - 15:00","東京都江東區豐洲6-6-1")
+        ],
+        4: [
+          mk("10:00","三鷹之森吉卜力美術館","龍貓迷必訪，需事先預約門票","館內全程禁止拍照","2 小時","10:00 - 18:00","東京都三鷹市下連雀1-1-83"),
+          mk("14:00","東京車站一番街","伴手禮甜點大採購天堂","東京香蕉、起司蛋糕捲必買","1.5 小時","10:00 - 20:30","東京都千代田區丸之內1-9-1"),
+          mk("17:30","前往成田機場","搭乘利木津巴士返程","","1 小時車程","依巴士時刻","千葉縣成田市古込1-1")
+        ]
+      },
+      checklist: {
+        todo: [
+          { id:"c1", text:"確認護照效期是否超過半年", done:true },
+          { id:"c2", text:"列印飯店訂房確認信", done:false },
+          { id:"c3", text:"下載離線地圖與翻譯 App", done:false }
+        ],
+        shopping: [
+          { id:"s1", text:"嬰兒濕紙巾", done:false },
+          { id:"s2", text:"常備藥品", done:false },
+          { id:"s3", text:"行動電源與充電線", done:false }
+        ]
+      }
+    };
+  }
+
+  function mk(time,name,desc,tip,duration,hours,address){
+    return {
+      id: "t" + Math.random().toString(36).slice(2,10),
+      time: time||"", name: name||"", desc: desc||"", tip: tip||"",
+      duration: duration||"", hours: hours||"", address: address||""
+    };
+  }
+
+  var videoPickData = [
+    { name:"柯尼卡美能達天文館", desc:"親子天文劇場很推薦", duration:"1 小時", hours:"10:30 - 18:00", address:"東京都豐島區東池袋3-1", tip:"晚場影片較適合大寶寶" },
+    { name:"陽光水族館", desc:"屋頂企鵝散步超療癒", duration:"1.5 小時", hours:"10:00 - 20:00", address:"東京都豐島區東池袋3-1", tip:"" },
+    { name:"台場高達基地", desc:"1:1 鋼彈立像拍照打卡", duration:"40 分鐘", hours:"10:00 - 21:00", address:"東京都港區台場1-7-1", tip:"" }
+  ];
+
+  var weatherData = {
+    1: { high:22, low:14, rain:20, hourly:[
+      {time:"09:00",temp:16},{time:"12:00",temp:20},{time:"15:00",temp:22},{time:"18:00",temp:19},{time:"21:00",temp:15}
+    ]},
+    2: { high:24, low:15, rain:10, hourly:[
+      {time:"09:00",temp:17},{time:"12:00",temp:22},{time:"15:00",temp:24},{time:"18:00",temp:21},{time:"21:00",temp:16}
+    ]},
+    3: { high:21, low:13, rain:60, hourly:[
+      {time:"09:00",temp:15},{time:"12:00",temp:19},{time:"15:00",temp:21},{time:"18:00",temp:18},{time:"21:00",temp:14}
+    ]},
+    4: { high:23, low:14, rain:30, hourly:[
+      {time:"09:00",temp:16},{time:"12:00",temp:21},{time:"15:00",temp:23},{time:"18:00",temp:20},{time:"21:00",temp:15}
+    ]}
+  };
+
+  var infoData = {
+    flights: [
+      { tag:"去程", name:"CI 100", detail:"台北桃園 (TPE) → 東京成田 (NRT)　08:20 - 12:40" },
+      { tag:"回程", name:"CI 101", detail:"東京成田 (NRT) → 台北桃園 (TPE)　18:00 - 21:15" }
+    ],
+    stays: [
+      { tag:"Day 1-2", name:"Tokyo Bay Hotel", detail:"入住 15:00・退房 11:00　千葉縣浦安市高洲3-4-2" },
+      { tag:"Day 3-4", name:"新宿家庭旅館", detail:"入住 15:00・退房 10:00　東京都新宿區西新宿7-2-6" }
+    ],
+    reservations: [
+      { tag:"Day 1", name:"晴空街道燒肉店", detail:"19:00・4 位　需於現場出示訂位簡訊" },
+      { tag:"Day 3", name:"teamLab Planets", detail:"13:00 場次・已完成線上付款" }
+    ]
+  };
+
+  /* ---------- State ---------- */
+  var state = load();
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        if(parsed && parsed.days) return parsed;
+      }
+    }catch(e){ /* fall through to demo */ }
+    return demoData();
+  }
+
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ /* storage unavailable, fail silently */ }
+  }
+
+  /* ---------- Helpers ---------- */
+  function toMapsUrl(address){
+    if(!address) return "https://www.google.com/maps";
+    var t = address.trim();
+    if(/^https?:\/\//i.test(t)) return t;
+    return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(t);
+  }
+  function esc(str){
+    var d = document.createElement("div");
+    d.textContent = str==null? "" : str;
+    return d.innerHTML;
+  }
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(showToast._tm);
+    showToast._tm = setTimeout(function(){ t.classList.remove("show"); }, 1800);
+  }
+
+  /* ================= View switching ================= */
+  var views = { itinerary:"viewItinerary", info:"viewInfo", checklist:"viewChecklist" };
+  function setView(v){
+    state.activeView = v;
+    save();
+    renderViewVisibility();
+  }
+  function renderViewVisibility(){
+    Object.keys(views).forEach(function(key){
+      document.getElementById(views[key]).classList.toggle("active", key === state.activeView);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".nav-item"), function(btn){
+      btn.classList.toggle("active", btn.dataset.view === state.activeView);
+    });
+    var showFab = state.activeView === "itinerary";
+    document.getElementById("fabWrap").style.display = showFab ? "flex" : "none";
+    if(!showFab) closeFab();
+  }
+  document.getElementById("bottomNav").addEventListener("click", function(e){
+    var btn = e.target.closest(".nav-item");
+    if(!btn) return;
+    setView(btn.dataset.view);
+    if(btn.dataset.view === "info") renderInfo();
+    if(btn.dataset.view === "checklist"){ renderChecklistTabs(); renderChecklistList(); }
+  });
+
+  /* ---------- Render: Day tabs ---------- */
+  var dayLabels = {1:"Day 1",2:"Day 2",3:"Day 3",4:"Day 4"};
+  function renderTabs(){
+    var wrap = document.getElementById("dayTabs");
+    wrap.innerHTML = "";
+    [1,2,3,4].forEach(function(d){
+      var btn = document.createElement("button");
+      btn.className = "day-tab" + (state.activeDay===d ? " active":"");
+      btn.textContent = dayLabels[d];
+      btn.addEventListener("click", function(){
+        state.activeDay = d;
+        save();
+        renderTabs();
+        renderWeather();
+        renderDaySummary();
+        renderList();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  /* ---------- Render: weather ---------- */
+  function renderWeather(){
+    var w = weatherData[state.activeDay] || { high:"--", low:"--", rain:"--", hourly:[] };
+    var el = document.getElementById("weatherStrip");
+    var hourlyHtml = (w.hourly||[]).map(function(h){
+      return '<div class="weather-hour"><span class="weather-hour-time">' + h.time + '</span><span class="weather-hour-temp">' + h.temp + '°</span></div>';
+    }).join("");
+    el.innerHTML =
+      '<div class="weather-hourly">' + hourlyHtml + '</div>' +
+      '<div class="weather-daily">' +
+        '<span class="weather-daily-temp">' + w.high + '° / ' + w.low + '°</span>' +
+        '<span class="weather-daily-rain">降雨機率 ' + w.rain + '%</span>' +
+      '</div>';
+  }
+
+  /* ---------- Render: summary ---------- */
+  function renderDaySummary(){
+    var items = state.days[state.activeDay] || [];
+    var el = document.getElementById("daySummary");
+    el.innerHTML = '<b>' + dayLabels[state.activeDay] + '</b>　共 <b>' + items.length + '</b> 個景點';
+  }
+
+  /* ---------- Render: list ---------- */
+  function renderList(){
+    var list = document.getElementById("tripList");
+    var items = state.days[state.activeDay] || [];
+    list.innerHTML = "";
+
+    if(items.length === 0){
+      var empty = document.createElement("li");
+      empty.className = "empty-state";
+      empty.textContent = "這天還沒有行程，點右下角「＋」開始新增";
+      list.appendChild(empty);
+      return;
+    }
+
+    items.forEach(function(item){
+      list.appendChild(renderCard(item));
+    });
+  }
+
+  function renderCard(item){
+    var li = document.createElement("li");
+    li.className = "trip-card";
+    li.dataset.id = item.id;
+
+    var top = document.createElement("div");
+    top.className = "card-top";
+
+    var main = document.createElement("div");
+    main.className = "card-head-main";
+    main.innerHTML =
+      '<div class="card-time' + (item.time? "":" empty") + '">' + esc(item.time||"未設定時間") + '</div>' +
+      '<div class="card-name">' + esc(item.name) + '</div>' +
+      (item.address ? '<div class="card-address">' + esc(item.address) + '</div>' : "");
+    top.appendChild(main);
+
+    var actions = document.createElement("div");
+    actions.className = "card-actions-top";
+    actions.innerHTML =
+      '<button class="icon-btn drag" title="拖曳排序">⠿</button>' +
+      '<button class="icon-btn delete" title="刪除">×</button>';
+    top.appendChild(actions);
+
+    li.appendChild(top);
+
+    var body = document.createElement("div");
+    body.className = "card-body";
+
+    var html = "";
+    if(item.desc){
+      html += '<p class="card-desc">' + esc(item.desc) + '</p>';
+    }
+    if(item.tip){
+      html += '<div class="card-tip"><span class="tip-label">推薦</span>' + esc(item.tip) + '</div>';
+    }
+
+    var blocks = "";
+    if(item.duration){
+      blocks += '<div class="meta-block"><span class="mb-label">停留時間</span><span class="mb-value">' + esc(item.duration) + '</span></div>';
+    }
+    if(item.hours){
+      blocks += '<div class="meta-block"><span class="mb-label">營業時間</span><span class="mb-value">' + esc(item.hours) + '</span></div>';
+    }
+    html += '<div class="meta-line"><div class="meta-blocks">' + blocks + '</div>' +
+      '<a class="nav-btn-sm" href="' + toMapsUrl(item.address) + '" target="_blank" rel="noopener">開啟導航</a></div>';
+
+    body.innerHTML = html;
+    li.appendChild(body);
+
+    // delete
+    actions.querySelector(".delete").addEventListener("click", function(){
+      var arr = state.days[state.activeDay];
+      var i = arr.findIndex(function(x){ return x.id === item.id; });
+      if(i>-1){ arr.splice(i,1); save(); renderDaySummary(); renderList(); showToast("已刪除景點"); }
+    });
+
+    // drag
+    var handle = actions.querySelector(".drag");
+    handle.addEventListener("pointerdown", function(e){ startDrag(e, li); });
+
+    return li;
+  }
+
+  /* ---------- Drag & drop reorder (Pointer Events, mouse+touch) ---------- */
+  var dragState = null;
+
+  function startDrag(e, card){
+    e.preventDefault();
+    var list = card.parentElement;
+    dragState = {
+      card: card,
+      list: list,
+      lastY: e.clientY,
+      translate: 0
+    };
+    card.classList.add("dragging");
+    try{ card.setPointerCapture(e.pointerId); }catch(err){}
+    document.addEventListener("pointermove", onDragMove);
+    document.addEventListener("pointerup", endDrag);
+    document.addEventListener("pointercancel", endDrag);
+  }
+
+  function onDragMove(e){
+    if(!dragState) return;
+    var dy = e.clientY - dragState.lastY;
+    dragState.lastY = e.clientY;
+    dragState.translate += dy;
+    dragState.card.style.transform = "translateY(" + dragState.translate + "px)";
+    checkSwap();
+  }
+
+  function checkSwap(){
+    var list = dragState.list;
+    var card = dragState.card;
+    var cardRect = card.getBoundingClientRect();
+    var cardCenter = cardRect.top + cardRect.height/2;
+    var children = Array.prototype.slice.call(list.children).filter(function(c){ return c!==card; });
+    var cardIdx = Array.prototype.indexOf.call(list.children, card);
+
+    for(var i=0;i<children.length;i++){
+      var sib = children[i];
+      var sibIdx = Array.prototype.indexOf.call(list.children, sib);
+      var sRect = sib.getBoundingClientRect();
+      var sCenter = sRect.top + sRect.height/2;
+
+      if(cardIdx < sibIdx && cardCenter > sCenter){
+        list.insertBefore(card, sib.nextSibling);
+        dragState.translate -= (sRect.height + GAP);
+        card.style.transform = "translateY(" + dragState.translate + "px)";
+        break;
+      } else if(cardIdx > sibIdx && cardCenter < sCenter){
+        list.insertBefore(card, sib);
+        dragState.translate += (sRect.height + GAP);
+        card.style.transform = "translateY(" + dragState.translate + "px)";
+        break;
+      }
+    }
+  }
+
+  function endDrag(){
+    if(!dragState) return;
+    var card = dragState.card;
+    var list = dragState.list;
+    card.classList.remove("dragging");
+    card.style.transform = "";
+
+    // rebuild array order from DOM
+    var ids = Array.prototype.map.call(list.children, function(c){ return c.dataset.id; });
+    var arr = state.days[state.activeDay];
+    var byId = {};
+    arr.forEach(function(it){ byId[it.id]=it; });
+    state.days[state.activeDay] = ids.map(function(id){ return byId[id]; }).filter(Boolean);
+
+    save();
+    document.removeEventListener("pointermove", onDragMove);
+    document.removeEventListener("pointerup", endDrag);
+    document.removeEventListener("pointercancel", endDrag);
+    dragState = null;
+  }
+
+  /* ---------- Copy addresses ---------- */
+  document.getElementById("copyAddrBtn").addEventListener("click", function(){
+    var items = state.days[state.activeDay] || [];
+    var addrs = items.map(function(it){ return it.name + "：" + (it.address||"（尚無地址）"); }).join("\n");
+    if(!addrs){ showToast("這天還沒有景點"); return; }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(addrs).then(function(){
+        showToast("已複製今日所有地址");
+      }).catch(function(){
+        fallbackCopy(addrs);
+      });
+    } else {
+      fallbackCopy(addrs);
+    }
+  });
+  function fallbackCopy(text){
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand("copy"); showToast("已複製今日所有地址"); }
+    catch(e){ showToast("複製失敗，請手動選取"); }
+    document.body.removeChild(ta);
+  }
+
+  /* ---------- FAB ---------- */
+  var fabWrap = document.getElementById("fabWrap");
+  var fabBackdrop = document.getElementById("fabBackdrop");
+  document.getElementById("fabMain").addEventListener("click", function(){
+    var open = fabWrap.classList.toggle("open");
+    fabBackdrop.classList.toggle("show", open);
+  });
+  fabBackdrop.addEventListener("click", closeFab);
+  function closeFab(){
+    fabWrap.classList.remove("open");
+    fabBackdrop.classList.remove("show");
+  }
+
+  /* ---------- Manual add sheet ---------- */
+  var manualOverlay = document.getElementById("manualOverlay");
+  document.getElementById("openManualBtn").addEventListener("click", function(){
+    closeFab();
+    document.getElementById("manualForm").reset();
+    manualOverlay.classList.add("show");
+  });
+  document.getElementById("manualCloseBtn").addEventListener("click", function(){
+    manualOverlay.classList.remove("show");
+  });
+  manualOverlay.addEventListener("click", function(e){
+    if(e.target === manualOverlay) manualOverlay.classList.remove("show");
+  });
+  document.getElementById("manualForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = document.getElementById("manualName").value.trim();
+    var address = document.getElementById("manualAddress").value.trim();
+    if(!name || !address) return;
+    var item = mk("", name, "", "", "", "", address);
+    state.days[state.activeDay].push(item);
+    save();
+    renderDaySummary();
+    renderList();
+    manualOverlay.classList.remove("show");
+    document.getElementById("manualForm").reset();
+    showToast("已加入「" + name + "」");
+  });
+
+  /* ---------- Video pick sheet ---------- */
+  var videoOverlay = document.getElementById("videoOverlay");
+  document.getElementById("openVideoBtn").addEventListener("click", function(){
+    closeFab();
+    renderVideoPickList();
+    videoOverlay.classList.add("show");
+  });
+  document.getElementById("videoCloseBtn").addEventListener("click", function(){
+    videoOverlay.classList.remove("show");
+  });
+  videoOverlay.addEventListener("click", function(e){
+    if(e.target === videoOverlay) videoOverlay.classList.remove("show");
+  });
+  function buildEmbedSrc(url){
+    var u = url.trim();
+    if(!u) return "";
+    if(/youtu\.?be/i.test(u)){
+      var idMatch = u.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([a-zA-Z0-9_-]{6,})/);
+      if(idMatch) return "https://www.youtube.com/embed/" + idMatch[1];
+      return u;
+    }
+    if(/instagram\.com/i.test(u)){
+      var clean = u.split("?")[0].replace(/\/$/, "");
+      if(!/\/embed$/.test(clean)) clean += "/embed";
+      return clean;
+    }
+    return u;
+  }
+  document.getElementById("loadVideoBtn").addEventListener("click", function(){
+    var raw = document.getElementById("videoUrlInput").value;
+    var src = buildEmbedSrc(raw);
+    var iframe = document.querySelector("#videoOverlay .ig-embed iframe");
+    if(!src){ showToast("請先貼上影片連結"); return; }
+    iframe.src = src;
+  });
+  function renderVideoPickList(){
+    var wrap = document.getElementById("videoPickList");
+    wrap.innerHTML = "";
+    videoPickData.forEach(function(spot){
+      var row = document.createElement("div");
+      row.className = "video-pick-item";
+      row.innerHTML =
+        '<div class="vp-main"><div class="vp-name">' + esc(spot.name) + '</div>' +
+        '<div class="vp-desc">' + esc(spot.desc) + '</div></div>' +
+        '<button class="vp-add">加入</button>';
+      var btn = row.querySelector(".vp-add");
+      btn.addEventListener("click", function(){
+        var item = mk("", spot.name, spot.desc, spot.tip, spot.duration, spot.hours, spot.address);
+        state.days[state.activeDay].push(item);
+        save();
+        renderDaySummary();
+        renderList();
+        btn.textContent = "已加入";
+        btn.classList.add("added");
+        btn.disabled = true;
+        showToast("已加入「" + spot.name + "」到 " + dayLabels[state.activeDay]);
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  /* ================= Info view ================= */
+  function renderInfoGroup(containerId, items){
+    var wrap = document.getElementById(containerId);
+    wrap.innerHTML = items.map(function(it){
+      return '<div class="info-card"><div class="info-card-top">' +
+        '<span class="info-card-name">' + esc(it.name) + '</span>' +
+        '<span class="info-tag">' + esc(it.tag) + '</span></div>' +
+        '<div class="info-card-detail">' + esc(it.detail) + '</div></div>';
+    }).join("");
+  }
+  function renderInfo(){
+    renderInfoGroup("infoFlights", infoData.flights);
+    renderInfoGroup("infoStays", infoData.stays);
+    renderInfoGroup("infoReservations", infoData.reservations);
+  }
+
+  /* ================= Checklist view ================= */
+  var checklistLabels = { todo:"待辦清單", shopping:"購物清單" };
+  function renderChecklistTabs(){
+    var wrap = document.getElementById("checklistTabs");
+    wrap.innerHTML = "";
+    ["todo","shopping"].forEach(function(key){
+      var btn = document.createElement("button");
+      btn.className = "subtab" + (state.activeChecklistTab===key ? " active":"");
+      btn.textContent = checklistLabels[key];
+      btn.addEventListener("click", function(){
+        state.activeChecklistTab = key;
+        save();
+        renderChecklistTabs();
+        renderChecklistList();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+  function renderChecklistList(){
+    var wrap = document.getElementById("checklistList");
+    var items = state.checklist[state.activeChecklistTab] || [];
+    wrap.innerHTML = "";
+    if(items.length === 0){
+      var empty = document.createElement("li");
+      empty.className = "empty-state";
+      empty.textContent = "目前沒有項目，輸入後按新增";
+      wrap.appendChild(empty);
+      return;
+    }
+    items.forEach(function(item){
+      var li = document.createElement("li");
+      li.className = "check-item" + (item.done ? " done":"");
+      li.innerHTML =
+        '<input type="checkbox" ' + (item.done?"checked":"") + '>' +
+        '<span class="ci-text">' + esc(item.text) + '</span>' +
+        '<button class="ci-delete">×</button>';
+      li.querySelector('input[type=checkbox]').addEventListener("change", function(e){
+        item.done = e.target.checked;
+        save();
+        li.classList.toggle("done", item.done);
+      });
+      li.querySelector(".ci-delete").addEventListener("click", function(){
+        var arr = state.checklist[state.activeChecklistTab];
+        var i = arr.findIndex(function(x){ return x.id === item.id; });
+        if(i>-1){ arr.splice(i,1); save(); renderChecklistList(); }
+      });
+      wrap.appendChild(li);
+    });
+  }
+  document.getElementById("checklistAddForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var input = document.getElementById("checklistInput");
+    var text = input.value.trim();
+    if(!text) return;
+    state.checklist[state.activeChecklistTab].push({ id:"c"+Math.random().toString(36).slice(2,9), text:text, done:false });
+    save();
+    input.value = "";
+    renderChecklistList();
+  });
+
+  /* ---------- Init ---------- */
+  renderTabs();
+  renderWeather();
+  renderDaySummary();
+  renderList();
+  renderViewVisibility();
+
+})();
+</script>
+</body>
+</html>
